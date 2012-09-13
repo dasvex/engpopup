@@ -8,58 +8,6 @@ using System.Collections.Specialized;
 //todo тру юзер эксепшионы , различные методы поиска селект
 
 namespace SqliteGateWay {
-
-    /*internal static class SqliteGateWay {
-        private class BaseGateWay : IDisposable {
-            private SQLiteConnection connection;
-            private SQLiteCommand command;
-            public BaseGateWay(string DBName) {
-                connection = new SQLiteConnection();
-                connection.ConnectionString = @"Data Source=" + DBName;
-                connection.Open();
-                command = new SQLiteCommand(connection);
-                command.CommandType = CommandType.Text;
-            }
-            public string QueryText {
-                get {
-                    return command.CommandText;
-                }
-                set {
-                    command.CommandText = value;
-                }
-            }
-            public void ExecuteNonQuery() {
-                command.ExecuteNonQuery();
-            }
-            public SQLiteDataReader ExecuteQuery() {
-                return command.ExecuteReader();
-            }
-            public void Dispose() {
-                command.Dispose();
-                connection.Dispose();
-            }
-        }
-        private static BaseGateWay  GateWay;
-        public static string QueryText {
-            get {
-                return GateWay.QueryText;
-            }
-            set {
-                GateWay.QueryText = value;
-            }
-        }
-        private const  string BaseFile =  @"G:\eng popup\EngPopup\bin\Debug\diction.lite";
-        public static void ExecuteNonQuery() {
-            using(GateWay = new BaseGateWay(BaseFile)) {
-                GateWay.ExecuteNonQuery();
-            }
-        }
-        public static SQLiteDataReader ExecuteQuery() {
-            using(GateWay = new BaseGateWay(BaseFile)) {
-                return GateWay.ExecuteQuery();
-            }
-        }
-    */
     public abstract class DictionRecord {
         private const  string BaseFile =  @"G:\eng popup\EngPopup\bin\Debug\diction.lite";
         private class BaseGateWay : IDisposable {

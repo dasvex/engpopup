@@ -4,8 +4,7 @@ using System;
 
 namespace EngPopup.forms
 {
-    partial class TrayForm
-    {
+    partial class TrayForm{
         private const string TRAY_NAME=@"EngEngIner";
         private const string ICON_NAME=@"TrayIcon.ico";
         //private string ICON_PATH=System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData );
@@ -18,16 +17,12 @@ namespace EngPopup.forms
             TrayIcon.Text=TRAY_NAME;
             TrayIcon.Visible=true;
         }
-
     }
-    partial class TrayForm 
-    {
-        public TrayForm()
-        {
+    partial class TrayForm{
+        public TrayForm(){
            InitilizeComponent();
         }
-        public void AddMeniItem(TrayMenu menu)
-        {
+        public void AddMeniItem(TrayMenu menu){
             TrayIcon.ContextMenu.MenuItems.Add(menu);
             TrayIcon.ContextMenu.MenuItems[TrayIcon.ContextMenu.MenuItems.Count-1].Click += new EventHandler(OnMenuItemClick);
         }
@@ -38,8 +33,6 @@ namespace EngPopup.forms
                 {
                     TrayMenu trayitem = sender as TrayMenu;
                     trayitem.Action();
-                    //dynamic senderType = sender;
-                    //senderType.Action();
                 }
                 else throw new Exception("not TrayMenu Item");
             }
@@ -49,5 +42,4 @@ namespace EngPopup.forms
             }
         }
     }   
-
 }

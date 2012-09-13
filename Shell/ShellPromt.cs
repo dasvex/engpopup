@@ -53,8 +53,7 @@ namespace Shell {
                 _spaces = "";
             }
         }
-        private void RunConsole()
-        { 
+        private void RunConsole() {
             if (AllocConsole()){
                 this.WaitingCommand();
             }
