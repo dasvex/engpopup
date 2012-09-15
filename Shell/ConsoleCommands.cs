@@ -1,7 +1,7 @@
 ﻿using ElapsedTimer;
 using CommandParser;
 using SqliteGateWay;
-
+//все сообщения надо бы в кучку . толи эксепшинами толи хмл
 namespace Shell {
     public abstract class AConsoleCommand {
         public string CallName {
@@ -16,7 +16,7 @@ namespace Shell {
             this.CallName = CallName;
             this.Description = Description;
         }
-        public abstract string Execute(ImputCommand param);
+        public abstract string ExecuteAndGetResponse(ImputCommand param);
     }
     //command for Timer
     public class CommandTimer : AConsoleCommand {
@@ -25,19 +25,26 @@ namespace Shell {
             : base(".timer",@"set / get timer elapsed (sec)") {
                this.Timer = timer;
         }
-        public override string Execute(ImputCommand param) {
-            if(param.Count < 1) 
-                return Timer.Interval.ToString();
-            if(param.Count == 1) {
-                double _interval;
-                double.TryParse(param[0],out _interval);
-                if(_interval <= 0   ||  _interval.ToString() == "")
-                    return "#invalid time elapsed";
-                Timer.Interval = _interval;
-                return "#timer is set";
+        public override string ExecuteAndGetResponse(ImputCommand param) {
+            switch(param.Count) {
+                case 0:
+                    return GetCurrentTimerInterval();
+                case 1:
+                    return GetResponseTrySetInterval(param[0]);
+                default:
+                    return "#invalid numbers of arg";
             }
-            return "#invalid numbers of arg";
-            
+        }
+        private string GetCurrentTimerInterval(){
+                return Timer.Interval.ToString();
+        }
+        private string GetResponseTrySetInterval(string interval) {
+            double _interval;
+            double.TryParse(interval,out _interval);
+            if(_interval <= 0 || _interval.ToString() == "")
+                return "#invalid time elapsed";
+            Timer.Interval = _interval;
+            return "#timer is set";
         }
     }  
     public class CommandStop  : AConsoleCommand {
@@ -46,7 +53,7 @@ namespace Shell {
             : base(".stop","program pause") {
              this.Timer = timer;
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count != 0)
                 return @"#to many args";
             Timer.Enabled = false;
@@ -59,7 +66,7 @@ namespace Shell {
             : base(".start","run program") {
                 this.Timer = timer;
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count != 0)
                 return @"#to many args";
             Timer.Enabled = true;
@@ -72,7 +79,7 @@ namespace Shell {
             : base(".callpopup","show next popup window") {
             this.Timer = timer;
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count != 0)
                 return @"#to many args";
             Timer.CallTimer();
@@ -84,20 +91,19 @@ namespace Shell {
         public CommandSelectWord()
             : base(".select","view word information") {
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count!=1)
                 return "#invalid numbers of arg";
             User_dic row = new User_dic();
             row.word = param[0];
-            row.SelectByWord();
-            return row.word;
+            return row.SelectByWord()?row.word+"  "+row.trans+"  "+row.priority:"N/A";
         }
     }//select word table?
     public class CommandInsertWord : AConsoleCommand {
         public CommandInsertWord()
             : base(".insert","insert new word") {
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count<=1 || param.Count>3)
                 return "#invalid numbers of arg";
             User_dic row = new User_dic();
@@ -111,41 +117,41 @@ namespace Shell {
                     return "#invalid arg priority";
                 row.priority = (uint)_prior;
             }
-            row.Insert();
-            return "#done";
+            return row.Insert()?"#done":"#error inserting";
         }
-    }
+    } //рефакторить
     public class CommandDeleteWord : AConsoleCommand {
         public CommandDeleteWord()
             : base(".delete","delete word by template") {
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count != 1)
                 return "#ivalid number of args";
             User_dic row = new User_dic();
             row.word = param[0];
-            row.Delete();
-            return "#done";
+            return row.Delete() ? "#done" : "#not deleted";
         }
-    }
+    }  // 
     public class CommandSetPriority : AConsoleCommand {
         public CommandSetPriority()
             : base(".priority","set priority call for word") {
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if (param.Count!=2)
                 return "#ivalid number of args";
             User_dic row = new User_dic();
             row.word = param[0];
+            if(!row.SelectByWord())
+                return "#word not found";
             int _prior;
             int.TryParse(param[1],out _prior);
             if(_prior < 0 || _prior.ToString() == "")
                 return "#invalid arg priority";
             row.priority = (uint)_prior;
-            row.Insert();
-            return "#done";
+            row.Delete();
+            return row.Insert()?"#done":"#something wrong :(";
         }
-    }
+    } // update ?
     // command for Shell
     public class CommandQuitShell : AConsoleCommand {
         ShellPromt Shell;
@@ -153,7 +159,7 @@ namespace Shell {
             : base(".quit","close command promt") {
             this.Shell = shell;
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count != 0)
                 return @"#to many args";
             Shell.Print("#aborted");
@@ -163,18 +169,19 @@ namespace Shell {
         }
     }
     public class CommandHelp : AConsoleCommand {
-        ShellPromt Shell;
-        public CommandHelp(ShellPromt shell)
+        CommandStore store;
+        public CommandHelp(CommandStore store)
             : base(".help","commands guide") {
-                this.Shell = shell;
+                this.store = store;
         }
-        public override string Execute(ImputCommand param) {
+        public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count != 0)
                 return @"#to many args";
-            foreach(var item in Shell.AvalibleCommands()) {
-                Shell.Print(item.ToString());
+            string response="";
+            foreach(var item in store.GetAllCommandsAndDescription()) {
+                response=response+item.ToString()+"\n";
             }
-            return "";
+            return response;
         }
     } 
 }

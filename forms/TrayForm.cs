@@ -10,6 +10,15 @@ namespace EngPopup.forms
         //private string ICON_PATH=System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData );
         private const string ICON_PATH = @"G:\eng popup\EngPopup\forms";
         private NotifyIcon TrayIcon;
+        public bool Visible {
+            get {
+                return TrayIcon.Visible;
+            }
+            set {
+                TrayIcon.Visible = value;
+            }
+        }
+
         private void InitilizeComponent(){
             TrayIcon=new NotifyIcon();
             TrayIcon.Icon=new Icon(ICON_PATH+@"\"+ICON_NAME);
@@ -18,6 +27,7 @@ namespace EngPopup.forms
             TrayIcon.Visible=true;
         }
     }
+<<<<<<< HEAD
     partial class TrayForm{
         public TrayForm(){
            InitilizeComponent();
@@ -40,6 +50,17 @@ namespace EngPopup.forms
             {
                 MessageBox.Show(e.Message);
             }
+=======
+    partial class TrayForm 
+    {
+        public TrayForm()
+        {   
+           InitilizeComponent();
+        }
+        public void AddMeniItem(MenuItem menu)
+        {
+            TrayIcon.ContextMenu.MenuItems.Add(menu);
+>>>>>>> gateway comlite
         }
     }   
 }

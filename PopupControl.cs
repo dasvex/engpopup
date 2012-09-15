@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Windows.Forms;
 using PopupWindow;
+<<<<<<< HEAD
 namespace EngPopup
+=======
+
+namespace PopupWindow
+>>>>>>> gateway comlite
 {
     //test for git
     class PopupControll

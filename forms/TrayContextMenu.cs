@@ -1,7 +1,7 @@
 ﻿using System.Windows.Forms;
 namespace EngPopup.forms
 {
-     public abstract class TrayMenu : MenuItem
+    public abstract class TrayMenu : MenuItem
     {
          public abstract void Action();
          public TrayMenu(string menu_label)

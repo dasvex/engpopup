@@ -1,8 +1,12 @@
 ﻿using System.Runtime.InteropServices;
-using ElapsedTimer;
 using System;
-
 namespace Shell {
+    public class EventConsoleArgs:EventArgs{
+        public string UserInput{get;private set;}
+        internal EventConsoleArgs(string input){
+            this.UserInput=input;
+        }
+    }
     public class ShellPromt:System.IDisposable { //client
         #region dllImport
         [DllImport("kernel32.dll" , SetLastError=true)]
@@ -13,56 +17,46 @@ namespace Shell {
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool FreeConsole();
         #endregion
-        private int MaxCallNameLength {
-            get;
-            set;
-        }
-        private CommandStore commands;
-        private TimerControl timer;
+        public event EventHandler<EventConsoleArgs> UserInput;
+        private bool ConsoleIsAllocate; 
 
-        public void Dispose() {
-            FreeConsole();
+        public ShellPromt() {
+            this.ConsoleIsAllocate = false;
         }
-        public ShellPromt(TimerControl timer) {
-            this.MaxCallNameLength = 20;
-            this.timer = timer;
-            this.commands = new CommandStore();
-            commands.Add(new CommandTimer    (timer));
-            commands.Add(new CommandStop        (timer));
-            commands.Add(new CommandCallPopup   (timer));
-            commands.Add(new CommandStart       (timer));
-            commands.Add(new CommandHelp        (this));
-            commands.Add(new CommandQuitShell   (this));
-            commands.Add(new CommandSelectWord  ());
-            commands.Add(new CommandInsertWord  ());
-            commands.Add(new CommandDeleteWord  ());
-            commands.Add(new CommandSetPriority ());
+        public void Run() {
             RunConsole();
         }
         public void Print(string text) {
             System.Console.WriteLine(text);
         }
-        public System.Collections.IEnumerable AvalibleCommands() {
-            var _commands = commands.GetAllComands().GetEnumerator();
-            var _descriptions = commands.GetAllDescriptions().GetEnumerator();
-            string _spaces="";
-            while(_commands.MoveNext() && _descriptions.MoveNext()){
-                for(int _space_num = MaxCallNameLength - _commands.Current.ToString().Length  ; _space_num > 0; --_space_num)
-                    _spaces = _spaces + " ";
-                yield return Convert.ToString(_commands.Current) +  _spaces + ">>>" + Convert.ToString(_descriptions.Current);
-                _spaces = "";
+        public void Dispose() {
+            try {
+                if(this.ConsoleIsAllocate == true)
+                    FreeConsole();
+                this.ConsoleIsAllocate = false;
+            } catch(Exception) {  //ваше говно
             }
         }
+<<<<<<< HEAD
         private void RunConsole() {
+=======
+
+        private void RunConsole()
+        { 
+>>>>>>> gateway comlite
             if (AllocConsole()){
+                this.ConsoleIsAllocate = true;
                 this.WaitingCommand();
             }
+            this.Dispose();
         }
         private void WaitingCommand() {
             while(true) {
                 try {
-                    CommandParser.ImputCommand input = new  CommandParser.ImputCommand(System.Console.ReadLine());
-                    Print (commands.Execute(input.CallNameCommand,input) );
+                    string input=System.Console.ReadLine();
+                    if(UserInput == null)
+                        break;
+                    this.UserInput(this,new EventConsoleArgs(input));
                 } catch(System.IO.IOException) {
                     break;
                 } 
@@ -71,5 +65,5 @@ namespace Shell {
     }
 }
 
-
+    
 

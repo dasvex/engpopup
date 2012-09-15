@@ -7,19 +7,21 @@ using System.Collections.Specialized;
 
 //todo тру юзер эксепшионы , различные методы поиска селект
 
+
 namespace SqliteGateWay {
+<<<<<<< HEAD
+=======
+
+>>>>>>> gateway comlite
     public abstract class DictionRecord {
         private const  string BaseFile =  @"G:\eng popup\EngPopup\bin\Debug\diction.lite";
         private class BaseGateWay : IDisposable {
             private SQLiteConnection connection;
             private SQLiteCommand command;
-            //private SQLiteTransaction transaction;
             public BaseGateWay(string DBName) {
                 connection = new SQLiteConnection();
                 connection.ConnectionString = @"Data Source=" + DBName;
                 connection.Open();
-                //this.transaction = connection.BeginTransaction();
-                //command.Transaction = this.transaction;
                 command = new SQLiteCommand(connection);
                 command.CommandType = CommandType.Text;
             }
@@ -42,12 +44,10 @@ namespace SqliteGateWay {
                 try {
                     return command.ExecuteReader().GetValues();
                 } catch(Exception) {
-                    //transaction.Rollback();
                     return new NameValueCollection();
                 }
             }
             public void Dispose() {
-                //transaction.Dispose();
                 command.Dispose();
                 connection.Dispose();
             }
@@ -69,13 +69,21 @@ namespace SqliteGateWay {
                 return GateWay.ExecuteQuery();
             }
         }
-        protected abstract void SetRecord(NameValueCollection record);
+        protected abstract bool SetRecord(NameValueCollection record);
+        protected string SqlLiteToString(string value) {
+            return Convert.ToString(value);
+        }
+        protected int SqlLiteToInt(string value) {
+            return value == "" ? 0 : Convert.ToInt32(value);
+        }
         public abstract string TableName {
             get;
         }
-        public abstract void Insert();
-        public abstract void Delete();
-        public abstract void Select();
+        public abstract bool Insert();
+        public abstract bool Delete();
+        public abstract bool Select();
+
+
     }
 
     public class Standart_2500Record : DictionRecord {
@@ -106,7 +114,12 @@ namespace SqliteGateWay {
         }
         #endregion
         public Standart_2500Record() {
-            freq = "null";
+            this.id = 0;
+            this.word = "";
+            this.trans = "";
+            this.freq = "null";
+            this.call = 0;
+            this.priority = 0;
         }
         private const string Table=@"Standart_2500";
         public override string TableName {
@@ -114,34 +127,59 @@ namespace SqliteGateWay {
                 return Table;
             }
         }
-        public override void Insert() {
+        public override bool Insert() {
+            if(!this.IsAvalibleInsert())
+                return false;
             QueryText = "insert into " + TableName + " values (null,'" + word + "','" + trans + "','" + freq + "', 0 ," + priority + ")";
             ExecuteNonQuery();
+            return true;
         }
-        public override void Delete() {
+        public override bool Delete() {
+            if(!this.IsAvalibleDelete())
+                return false;
             QueryText = "delete from " + TableName + " where word='" + word + "'";
             ExecuteNonQuery();
+            return true;
         }
-        public override void Select() {
+        public override bool Select() {
+            if(!this.IsAvalibleSelect())
+                return false;
             QueryText = "select * from " + TableName + " where id=" + id;
-            SetRecord(ExecuteQuery());
+            return SetRecord(ExecuteQuery());
         }
-        public void SelectByWord() {
-            QueryText = "select * from " + TableName + " where word='" + word+"'";
-            SetRecord(ExecuteQuery());
+        public bool SelectByWord() {
+            if(!this.IsAvalibleSelectByWord())
+                return false;
+            QueryText = "select * from " + TableName + " where word='" + word + "'";
+            return SetRecord(ExecuteQuery());
         }
-        protected override void SetRecord(NameValueCollection reader) {
-            id = Convert.ToInt32(reader[0]);
-            word = Convert.ToString(reader[1]);
-            trans = Convert.ToString(reader[2]);
-            freq = Convert.ToString(reader[3]);
-            call = Convert.ToInt32(reader[4]);
-            if(Convert.ToString(reader[5]) == "") {
-                priority = 0;
-            } else {
-                priority = Convert.ToUInt32(reader[5]);
-            }
+        protected override bool SetRecord(NameValueCollection reader) {
+            if(!this.IsAvalibeSetRecord(reader))
+                return false;
+            id = this.SqlLiteToInt(reader[0]);
+            word = this.SqlLiteToString(reader[1]);
+            trans = this.SqlLiteToString(reader[2]);
+            freq = this.SqlLiteToString(reader[3]);
+            call = this.SqlLiteToInt(reader[4]);
+            priority = (uint)this.SqlLiteToInt(reader[5]);
+            return true;
         }
+        private bool IsAvalibeSetRecord(NameValueCollection reader) {
+            return reader[0].ToString() == "" ? false : true;
+        }
+        private bool IsAvalibleSelectByWord() {
+            return word == "" ? false : true;
+        }
+        private bool IsAvalibleSelect() {
+            return id == 0 ? false : true;
+        }
+        private bool IsAvalibleDelete() {
+            return true;
+        }
+        private bool IsAvalibleInsert() {
+            return (this.word != "" && this.trans != "") ? true : false;
+        }
+
     }
     public class User_dic : DictionRecord {
         #region property
@@ -167,37 +205,71 @@ namespace SqliteGateWay {
         }
         #endregion
         private const string Table=@"user_dic";
+        public User_dic() {
+            this.id = 0;
+            this.word = "";
+            this.trans = "";
+            this.call = 0;
+            this.priority = 0;
+        }
         public override string TableName {
             get {
                 return Table;
             }
         }
-        public override void Insert() {
+        public override bool Insert() {
+            if(!this.IsAvalibleInsert())
+                return false;
             QueryText = "insert into " + TableName + " values (null,'" + word + "','" + trans + "', 0 ," + priority + ")";
             ExecuteNonQuery();
+            return true;
         }
-        public override void Delete() {
+        public override bool Delete() {
+            if(!this.IsAvalibleDelete())
+                return false;
             QueryText = "delete from " + TableName + " where word='" + word + "'";
             ExecuteNonQuery();
+            return true;
         }
-        public override void Select() {
+        public override bool Select() {
+            if(!IsAvalibleSelect())
+                return false;
             QueryText = "select * from " + TableName + " where id=" + id;
-            SetRecord(ExecuteQuery());
+            return SetRecord(ExecuteQuery());
         }
-        public void SelectByWord() {
+        public bool SelectByWord() {
+            if(!this.IsAvalibleSelectByWord())
+                return false;
             QueryText = "select * from " + TableName + " where word='" + word + "'";
-            SetRecord(ExecuteQuery());
+            return SetRecord(ExecuteQuery());
         }
-        protected override void SetRecord(NameValueCollection reader) {
-            id = Convert.ToInt32(reader[0]);
-            word = Convert.ToString(reader[1]);
-            trans = Convert.ToString(reader[2]);
-            call = Convert.ToInt32(reader[3]);
-            if(Convert.ToString(reader[4]) == "") {
-                priority = 0;
-            } else {
-                priority = Convert.ToUInt32(reader[5]);
-            }
+        protected override bool SetRecord(NameValueCollection reader) {
+            if(!this.IsAvalibeSetRecord(reader))
+                return false;
+            id = this.SqlLiteToInt(reader[0]);
+            word = this.SqlLiteToString(reader[1]);
+            trans = this.SqlLiteToString(reader[2]);
+            call = this.SqlLiteToInt(reader[3]);
+            priority = (uint)this.SqlLiteToInt(reader[4]);
+            return true;
+        }
+
+        private bool IsAvalibeSetRecord(NameValueCollection reader) {
+            return reader[0].ToString() == "" ? false : true;
+        }
+        private bool IsAvalibleSelectByWord() {
+            return word == "" ? false : true;
+        }
+        private bool IsAvalibleSelect() {
+            return id == 0 ? false : true;
+        }
+        private bool IsAvalibleDelete() {
+            return true;
+        }
+        private bool IsAvalibleInsert() {
+            return (this.word != "" && this.trans != "") ? true : false;
         }
     }
 }
+
+

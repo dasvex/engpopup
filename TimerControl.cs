@@ -32,7 +32,7 @@ namespace ElapsedTimer  {
             timer.Dispose();
         }
         public void CallTimer() {
-            double _interval = timer.Interval;
+            /*double _interval = timer.Interval;
             bool   _enebled  = timer.Enabled;
             timer.Enabled = false;
             timer.AutoReset = false;
@@ -40,7 +40,7 @@ namespace ElapsedTimer  {
             System.Threading.Thread.Sleep(2);
             timer.AutoReset = true;
             timer.Interval = _interval;
-            timer.Enabled = _enebled;
+            timer.Enabled = _enebled;*/
         }
         private void timer_Elapsed(object sender,ElapsedEventArgs args) {
             if(Elapsed != null) {
