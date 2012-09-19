@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Windows.Forms;
 using PopupWindow;
-<<<<<<< HEAD
-namespace EngPopup
-=======
 
 namespace PopupWindow
->>>>>>> gateway comlite
 {
-    //test for git
     class PopupControll
     {
         private PopupNotifier popup;
@@ -30,27 +25,23 @@ namespace PopupWindow
             popup.ShowCloseButton = false;
             popup.ShowGrip = false;
 
-            //popup.ClickMouse+=new MouseEventHandler(popup_ClickMouse);
+
             popup.ClickForm += new EventHandler(popup_ClickForm);
-        }
-        private void popup_ClickMouse(object sender, MouseEventArgs args)
-        {
-            MessageBox.Show(args.Button.ToString());
         }
         private void popup_ClickForm(object sender, EventArgs args)
         {
             this.Hide();
         }
-
         public void Show(string message)
         {
             popup.Hide();
-            int height;
+            /*int height;
             if (message.Length > 60)
                 height = (message.Length / 60) * 15;
             else height = 45;
             popup.ContentText = message;
-            popup.Size = new System.Drawing.Size(400, height);
+            popup.Size = new System.Drawing.Size(400, height);*/
+            popup.ContentText = message;//
             popup.Popup();
         }
         public void Hide()

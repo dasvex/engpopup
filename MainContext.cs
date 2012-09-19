@@ -6,22 +6,24 @@ using Shell;
 using System.Threading;
 using ElapsedTimer;
 using PopupWindow;
+using WordSelector;
 
 namespace EngPopup
-{   //todoglobal //randomize select whith priority   
-    //эксепшны свои  ю собрать в одном месте сообщения и ошибки
+{   
+    // todoglobal //randomize select whith priority   
+    // эксепшны свои  ю собрать в одном месте сообщения и ошибки
     // проблемы с кодировками . старые записи с вопросами 
-    class MainContext : ApplicationContext
-    {   
-        private TrayForm      Tray  = new TrayForm();
-        private TimerControl  timer = new TimerControl();
-        private PopupControll popup = new PopupControll();
-        private CommandStore  commands = new CommandStore();
-        private ShellPromt    promt = new ShellPromt();
+
+    class MainContext : ApplicationContext{   
+        private TrayForm      Tray     = new TrayForm();
+        private TimerControl  timer    = new TimerControl();
+        private CommandStore  commands = new CommandStore();//юзинг
+        private ShellPromt    promt    = new ShellPromt(); // может юзинг
 
         public MainContext() {
-            this.Initilize();
+           this.Initilize();
         }
+
         private void RunConsole(){
             commands.Add(new CommandTimer(timer));
             commands.Add(new CommandStop(timer));
@@ -45,12 +47,22 @@ namespace EngPopup
             promt.Print(commands.ExecuteAndGetResponse(input));
         }
         private void timer_Elapsed(object sender,System.EventArgs args) {
-            System.Diagnostics.Debug.WriteLine(System.DateTime.Now.ToLongTimeString().ToString());
-        }
+                WordSelector.WordSelector selector = new WordSelector.WordSelector();
+                Standart_2500Record row = selector.GetWord();
+                PopupControll popup    = new PopupControll();
+                //popup.Show(row.word + " >>> " + row.trans + "\n >>> freq #" + row.freq + " call #" + row.call);
+                popup.Show(row.word + " >>> " + row.trans + "\n >>> freq #" + row.freq + " call #" + row.call+"\n"+System.DateTime.Now.ToLongTimeString());
+        }   /// все что тут переписывать 
         private void Initilize() {
+            this.InitilizeTrayForm();
+            timer.Interval = 3;
+            timer.Elapsed  +=new EventHandler(timer_Elapsed);
+            timer.Enabled  = true;
+        }
+        private void InitilizeTrayForm() {
             MenuItem ConsoleMenu = new MenuItem("Console");
             MenuItem CloseMenu = new MenuItem("Close");
-            CloseMenu.Click+=delegate{
+            CloseMenu.Click += delegate {
                 Tray.Visible = false;
                 Application.Exit();
             };
@@ -61,12 +73,6 @@ namespace EngPopup
             };
             Tray.AddMeniItem(ConsoleMenu);
             Tray.AddMeniItem(CloseMenu);
-            //Tray.AddMeniItem(new TrayMenuShowForm());
-            //Tray.AddMeniItem(new TrayMenuRegisterHotKey());
-            //Tray.AddMeniItem(new TrayMenuCloseApp());
-            timer.Interval = 1;
-            timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
-            timer.Enabled = true;
         }
     }
 }

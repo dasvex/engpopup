@@ -1,23 +1,21 @@
-﻿using System.Timers;
+﻿using System.Windows.Forms;
 using System;
 
 namespace ElapsedTimer  {
-    //test for gitsdfsdfsfsfsdf
     public class TimerControl:IDisposable {
         private Timer timer;
-        public event ElapsedEventHandler Elapsed;
+        public event EventHandler Elapsed;
 
         public TimerControl(){
             timer = new Timer();
-            timer.AutoReset = true;
-            timer.Elapsed+=timer_Elapsed;
+            timer.Tick+=timer_Elapsed;
         }
         public double Interval {
             get {
                 return timer.Interval / 1000;
             }
             set {
-                timer.Interval = value * 1000;
+                timer.Interval = (int)(value * 1000);
             }
         }
         public bool Enabled{
@@ -42,9 +40,9 @@ namespace ElapsedTimer  {
             timer.Interval = _interval;
             timer.Enabled = _enebled;*/
         }
-        private void timer_Elapsed(object sender,ElapsedEventArgs args) {
+        private void timer_Elapsed(object sender,EventArgs args) {
             if(Elapsed != null) {
-                Elapsed(this,args);
+                Elapsed(sender,args);
             }
         }
     }

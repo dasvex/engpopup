@@ -37,13 +37,9 @@ namespace Shell {
             } catch(Exception) {  //ваше говно
             }
         }
-<<<<<<< HEAD
-        private void RunConsole() {
-=======
 
         private void RunConsole()
         { 
->>>>>>> gateway comlite
             if (AllocConsole()){
                 this.ConsoleIsAllocate = true;
                 this.WaitingCommand();
