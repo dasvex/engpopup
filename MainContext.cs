@@ -8,19 +8,24 @@ using ElapsedTimer;
 using PopupWindow;
 using WordSelector;
 
+
 namespace EngPopup
 {   
-    // todoglobal //randomize select whith priority   
     // эксепшны свои  ю собрать в одном месте сообщения и ошибки
-    // проблемы с кодировками . старые записи с вопросами 
-
+    /// <summary>
+    /// возможность включать выключать слова
+    /// возможность подстройки распределения
+    /// треуг распред - где макс -это макс из таблиц . мин - =-20% от макс
+    /// </summary>
     class MainContext : ApplicationContext{   
         private TrayForm      Tray     = new TrayForm();
         private TimerControl  timer    = new TimerControl();
         private CommandStore  commands = new CommandStore();//юзинг
         private ShellPromt    promt    = new ShellPromt(); // может юзинг
+        private WordSelector.WordSelector selector = new WordSelector.WordSelector();// не хочет рандомить 
 
         public MainContext() {
+           //this.Test();
            this.Initilize();
         }
 
@@ -47,10 +52,8 @@ namespace EngPopup
             promt.Print(commands.ExecuteAndGetResponse(input));
         }
         private void timer_Elapsed(object sender,System.EventArgs args) {
-                WordSelector.WordSelector selector = new WordSelector.WordSelector();
                 Standart_2500Record row = selector.GetWord();
                 PopupControll popup    = new PopupControll();
-                //popup.Show(row.word + " >>> " + row.trans + "\n >>> freq #" + row.freq + " call #" + row.call);
                 popup.Show(row.word + " >>> " + row.trans + "\n >>> freq #" + row.freq + " call #" + row.call+"\n"+System.DateTime.Now.ToLongTimeString());
         }   /// все что тут переписывать 
         private void Initilize() {
@@ -59,6 +62,18 @@ namespace EngPopup
             timer.Elapsed  +=new EventHandler(timer_Elapsed);
             timer.Enabled  = true;
         }
+        private void Test() {
+            //selector.Betta=-1;
+            //mess();
+            for(int i = 0; i < 1000; i++) {
+                System.Diagnostics.Debug.WriteLine(selector.NextValue());
+            }
+        }
+        private void mess() {
+            System.Diagnostics.Debug.WriteLine(selector.Betta.ToString());
+            System.Diagnostics.Debug.WriteLine(selector.Gamma.ToString());
+        }
+
         private void InitilizeTrayForm() {
             MenuItem ConsoleMenu = new MenuItem("Console");
             MenuItem CloseMenu = new MenuItem("Close");

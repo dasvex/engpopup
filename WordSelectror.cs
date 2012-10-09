@@ -1,66 +1,145 @@
 ﻿using System;
+using EngPopup.exceptions;
 using Troschuetz.Random;
 using SqliteGateWay;
 
 namespace WordSelector {
+    ///незя геренить тольок отрицательные будет ппц в некст вал
+    /// <summary>
+    /// аальфа - нижний предел
+    /// бетта верхний предел
+    /// гамма -центровая
+    /// альфа должна быть на 20 % ЛЕВЕЕ установленной
+    /// бетта должна быть на 20 % ПРАВЕЕ установленной
+    /// </summary>
     class WordSelector {
-        private Generator generator = new Generator();
-        public double Mu {
+        private Generator generator = new Generator(770,800,780);
+        public int Betta {
             get{
-                return generator.Mu;
+                return generator.RightBorder;
             }
             set{
-                generator.Mu=value;
+                generator.SetBordersAndMedian(generator.LeftBorder,value,generator.Median);
             }
         }
-        public double Sigma{
+        public int Alpha {
             get {
-                return generator.Sigma;
+                return generator.LeftBorder;
+            }
+            set {
+                generator.SetBordersAndMedian(value,generator.RightBorder,generator.Median);
+            }
+        }
+        public int Gamma{
+            get{
+                return generator.Median;
             }
             set{
-                generator.Sigma=value;
+                generator.SetBordersAndMedian(generator.LeftBorder,generator.RightBorder,value);
             }
         }
         private class Generator {
-            private Troschuetz.Random.NormalDistribution  distribution= new NormalDistribution(new XorShift128Generator());
-            public double Mu {
-                get{
-                    return distribution.Mu;
+            private const double DISTRIBUTION_CORRECTION = 0.2; // подинмает характеристику на 20 процентов
+            private int RealAlpha {
+                get;
+                set;
+            }
+            private int RealBeta {
+                get;
+                set;
+            }
+            private Troschuetz.Random.TriangularDistribution  distribution= new TriangularDistribution(new XorShift128Generator());
+            private bool IsMedianNotBeetwenBorders(int leftBorder,int rightBorder,int median) {
+                return leftBorder > median || rightBorder < median ? true : false;
+            }
+            private bool IsNotPositiveBorder(int border) {
+                return border < 0 ? true : false;
+            }
+            private bool IsInvalidPositionBorders(int leftBorder,int rightBorder) {
+                return rightBorder <= leftBorder ? true : false;
+            }
+            private double OffsetBorders() {
+                return (this.RightBorder - this.LeftBorder) * DISTRIBUTION_CORRECTION;
+            }
+            private void CorrectionBorders() {
+                int _alpha = Convert.ToInt32(this.LeftBorder - this.OffsetBorders());
+                int _beta  = Convert.ToInt32(this.RightBorder+ this.OffsetBorders());
+                this.LeftBorder = _alpha;
+                this.RightBorder = _beta;
+            }
+
+
+            public int LeftBorder {
+                get {
+                    return (int)distribution.Alpha;
                 }
-                set{
-                    distribution.Mu=value;
+                private set {
+                    distribution.Alpha = value;
                 }
             }
-            public double Sigma{
-                get {
-                    return distribution.Sigma;
+            public int RightBorder {
+                get{
+                    return (int)distribution.Beta;
                 }
-                set{
-                    distribution.Sigma=value;
+                private set{
+                    distribution.Beta = value;
+                }
+            }
+            public int Median{
+                get{
+                    return (int)distribution.Gamma;
+                }
+                private set{
+                    distribution.Gamma = value;
                 }
             }
 
-            public Generator() {
-                this.Mu = 1000;
-                this.Sigma = 500;
-            }
-            public double GenerateDouble() {
-                return   distribution.NextDouble();
+            public int GenerateNextSignedValue() {
+                int RandomVal=-1;
+                while(RandomVal < RealAlpha || RandomVal>RealBeta)
+                    RandomVal = Convert.ToInt32(distribution.NextDouble());
+                return RandomVal;
             }
             public bool Reset(){
                 return distribution.Reset();
             }
-
+            public void SetBordersAndMedian(int leftBorder, int rightBorder, int median) {
+                if(this.IsInvalidPositionBorders(leftBorder,rightBorder))
+                    throw new BorderSwitchException();
+                if(this.IsMedianNotBeetwenBorders(leftBorder,rightBorder,median))
+                    throw new MedianOutOfRangeException();
+                if(this.IsNotPositiveBorder(leftBorder))
+                    throw new NegativeBorderException();
+                if(this.IsNotPositiveBorder(rightBorder))
+                    throw new NegativeBorderException();
+                if(leftBorder <= this.LeftBorder) {
+                    this.LeftBorder = leftBorder;
+                    this.Median = median;
+                    this.RightBorder = rightBorder;
+                } else {
+                    this.RightBorder = rightBorder;
+                    this.Median = median;
+                    this.LeftBorder = leftBorder;
+                }
+                this.RealAlpha = leftBorder;
+                this.RealBeta = rightBorder;
+                this.CorrectionBorders();
+            }
+            public Generator(int alpha,int beta,int gamma) {
+                SetBordersAndMedian(alpha,beta,gamma);
+            }
         }
-
+        public int NextValue() {
+            return generator.GenerateNextSignedValue();
+        }
+        public WordSelector() {
+        }
         public bool Reset(){
             return  generator.Reset();
         }
-        private int NextValue() {
-            return Convert.ToInt32(1000 * generator.GenerateDouble());
-        }
         public Standart_2500Record GetWord() {
             Standart_2500Record row = new Standart_2500Record();
+            System.Diagnostics.Debug.WriteLine(this.NextValue());
             row.freq = this.NextValue();
             if (row.SelectByFreq() )
                 return row;
@@ -71,3 +150,6 @@ namespace WordSelector {
         }  //переписать говно это 
     }
 }
+
+
+ 
