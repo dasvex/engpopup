@@ -112,6 +112,17 @@ namespace WordSelector {
                     throw new NegativeBorderException();
                 if(this.IsNotPositiveBorder(rightBorder))
                     throw new NegativeBorderException();
+
+                if(leftBorder > this.LeftBorder && rightBorder < this.RightBorder)
+                     this.Median = median;
+                if(leftBorder <= this.LeftBorder)
+                     this.LeftBorder = leftBorder;
+                if(rightBorder >= this.RightBorder)
+                     this.RightBorder = rightBorder;
+                this.LeftBorder = leftBorder;
+                this.RightBorder = rightBorder;
+                this.Median = median;
+
                 if(leftBorder <= this.LeftBorder) {
                     this.LeftBorder = leftBorder;
                     this.Median = median;
