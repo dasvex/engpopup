@@ -2,7 +2,7 @@
 using CommandParser;
 
 namespace Shell {
-    public class CommandStore { //invoker
+    public class CommandStore:System.IDisposable { //invoker
         private Dictionary<string , AConsoleCommand> comands;
         private int DescriptionPosition;
         private string DescriptionPrefix;
@@ -49,12 +49,14 @@ namespace Shell {
         public void Clear() {
             comands.Clear();
         }
-
         private string GetName(object _obj) {
             return System.Convert.ToString(_obj);
         }
         private int GetLengthName(object _obj) {
             return System.Convert.ToString(_obj).Length;
+        }
+        public void Dispose() {
+            comands.Clear();
         }
     }
 }

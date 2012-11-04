@@ -47,6 +47,7 @@ namespace Shell {
             this.Dispose();
         }
         private void WaitingCommand() {
+            this.UserInput(this,new EventConsoleArgs(".help"));
             while(true) {
                 try {
                     string input=System.Console.ReadLine();
