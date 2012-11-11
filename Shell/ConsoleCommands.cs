@@ -1,6 +1,7 @@
 ﻿using ElapsedTimer;
 using CommandParser;
 using SqliteGateWay;
+using DictionsControl = EngPopup.DictionsControl;
 //все сообщения надо бы в кучку . толи эксепшинами толи хмл
 //команды работы с базой кривые особенно ремарка
 
@@ -103,8 +104,8 @@ namespace Shell {
     } 
     //command for Diction
     public class CommandUsingDictions : AConsoleCommand {
-        private EngPopup.DictionsControl dictions;
-        public CommandUsingDictions(EngPopup.DictionsControl dictions)
+        private DictionsControl dictions;
+        public CommandUsingDictions(DictionsControl dictions)
             : base(".using","add / get using tables") {
                 this.dictions = dictions;
         }
@@ -134,9 +135,9 @@ namespace Shell {
         }
     }
     public class CommandDisableDictions : AConsoleCommand {
-        private EngPopup.DictionsControl dictions;
-        public CommandDisableDictions(EngPopup.DictionsControl dictions)
-            : base(".dising","get not usings / remove from using tables") {
+        private DictionsControl dictions;
+        public CommandDisableDictions(DictionsControl dictions)
+            : base(".disusing","get not usings / remove from using tables") {
             this.dictions = dictions;
         }
         public override string ExecuteAndGetResponse(ImputCommand param) {
@@ -164,8 +165,10 @@ namespace Shell {
         }
     }
     public class CommandSelectWord : AConsoleCommand {
-        public CommandSelectWord()
+        private DictionsControl dictions;
+        public CommandSelectWord(DictionsControl dictions)
             : base(".select","view word information") {
+            this.dictions = dictions;
         }
         public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count!=1)
@@ -173,26 +176,23 @@ namespace Shell {
             return GetRowByWord(param[0]);
         }
         private string GetRowByWord(string word) {
-            string response_row=this.GetRowFromUserDic(word);
-            if(response_row != "")
-                response_row = response_row + "\n";
-            response_row = response_row+this.GetRowFromStandartDic(word);
+            string response_row ="";
+            foreach(var item in dictions.GetUsingdictions()) {
+                response_row += this.GetRow(word,item.ToString()) + "\n";
+            }
             return response_row == "" ? "#not found" : response_row;
         }
-        private string GetRowFromUserDic(string word){
-            Record row = new Record(DictionList.userdic);
+        private string GetRow(string word , string diction){
+            Record row = new Record(diction);
             row.word = word;
             return row.SelectByWord()?row.word+"  "+row.trans+"  "+row.remark+"  "+row.freq:""; 
         }
-        private string GetRowFromStandartDic(string word){
-            Record s_row = new Record(DictionList.standart);
-            s_row.word = word;
-            return s_row.SelectByWord() ? s_row.word + "  " + s_row.remark + "  " + s_row.trans + "" : @"N\A";
-        }
     }
     public class CommandInsertWord : AConsoleCommand {
-        public CommandInsertWord()
+        private DictionsControl dictions;
+        public CommandInsertWord(DictionsControl dictions)
             : base(".insert","insert new word (word , translate , remark* , priority*)") {
+            this.dictions = dictions;
         }
         public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count<=1 || param.Count>4)
@@ -200,15 +200,19 @@ namespace Shell {
             return InsertRowAndGetResponse(param);
         }
         private string InsertRowAndGetResponse(ImputCommand param) {
-            Record row = new Record(DictionList.userdic);
-            row = this.SetWordForRow(row,param[0]);
-            row = this.SetTransForRow(row,param[1]);
-            if(param.Count > 2)
-                row = this.SetRemarkForRow(row,param[2]);
-            if(param.Count > 3) 
-                if ( !this.TrySetPriorForRow(row , param[3]) )
-                    return "#Invalid priopity";
-            return row.Insert() ? "#done" : "#error inserting";
+            foreach(var item in dictions.GetUsingdictions()) {
+                Record row = new Record(item.ToString());
+                row = this.SetWordForRow(row,param[0]);
+                row = this.SetTransForRow(row,param[1]);
+                if(param.Count > 2)
+                    row = this.SetRemarkForRow(row,param[2]);
+                if(param.Count > 3)
+                    if(!this.TrySetPriorForRow(row,param[3]))
+                        return "#Invalid priopity";
+                if (!row.Insert() )
+                    return "#error inserting";               
+            }
+            return "#done";     
         }
         private Record SetWordForRow(Record row,string word) {
             row.word = word;
@@ -232,8 +236,10 @@ namespace Shell {
         }
     } 
     public class CommandDeleteWord : AConsoleCommand {
-        public CommandDeleteWord()
+        private DictionsControl dictions;
+        public CommandDeleteWord(DictionsControl dictions)
             : base(".delete","delete word by template") {
+            this.dictions = dictions;
         }
         public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count != 1)
@@ -241,27 +247,37 @@ namespace Shell {
             return DeleteRowByWordAndGetResponse(param[0]);
         }
         private string DeleteRowByWordAndGetResponse(string word) {
-            Record row = new Record(DictionList.standart);
-            row.word = word;
-            return row.Delete() ? "#done" : "#not deleted";   
+            foreach(var item in dictions.GetUsingdictions()) {
+                Record row = new Record(item.ToString());
+                row.word = word;
+                if (!row.Delete())
+                    return "#not deleted";
+            }
+            return "#done" ;
         }
     }  
     public class CommandSetPriority : AConsoleCommand {
-        public CommandSetPriority()
+        private DictionsControl dictions;
+        public CommandSetPriority(DictionsControl dictions)
             : base(".priority","set priority call for word") {
+            this.dictions = dictions;
         }
         public override string ExecuteAndGetResponse(ImputCommand param) {
-            if (param.Count!=2)
-                return "#ivalid number of args";
-            Record row = new Record(DictionList.standart);
-            row.word = param[0];
-            if(!row.SelectByWord())
-                return "#word not found";
-            if(!row.Delete())
-                return "#something wrong :(";
-            if( !this.TrySetPriorForRow(row , param[1]))
-                return "#invalid arg priority";
-            return row.Insert()?"#done":"#something wrong :(";
+            foreach(var item in dictions.GetUsingdictions()) {
+                if(param.Count != 2)
+                    return "#ivalid number of args";
+                Record row = new Record(item.ToString());
+                row.word = param[0];
+                if(!row.SelectByWord())
+                    return "#word not found";
+                if(!row.Delete())
+                    return "#something wrong :(";
+                if(!this.TrySetPriorForRow(row,param[1]))
+                    return "#invalid arg priority";
+                if (!row.Insert())
+                    return "#something wrong :(";               
+            }
+            return "#done";
         }
         private bool TrySetPriorForRow(Record row,string prior) {
             int _prior;
@@ -271,11 +287,12 @@ namespace Shell {
             row.freq = (int)_prior;
             return true;
         }
-
     }
     public class CommandEnableWord : AConsoleCommand {
-        public CommandEnableWord()
+        private DictionsControl dictions;
+        public CommandEnableWord(DictionsControl dictions)
             : base(".enable","enable word") {
+            this.dictions = dictions;
         }
         public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count!=1)
@@ -283,18 +300,19 @@ namespace Shell {
             return EnableWord(param[0]);
         }
         private string EnableWord(string p) {
-            Record row = new Record(DictionList.standart);
-            row.word = p;
-            row.EnableWord();
-            Record row1 = new Record(DictionList.userdic);
-            row.word = p;
-            row.EnableWord();
+            foreach(var item in dictions.GetUsingdictions()) {
+                Record row = new Record(item.ToString());
+                row.word = p;
+                row.EnableWord();
+            }
             return p + "#word now avalible";
         }
     }
     public class CommandDisableWord : AConsoleCommand {
-        public CommandDisableWord()
+        private DictionsControl dictions;
+        public CommandDisableWord(DictionsControl dictions)
             : base(".disable","disable word") {
+            this.dictions = dictions;
         }
         public override string ExecuteAndGetResponse(ImputCommand param) {
             if(param.Count != 1)
@@ -302,12 +320,11 @@ namespace Shell {
             return DisableWord(param[0]);
         }
         private string DisableWord(string p) {
-            Record row = new Record(DictionList.standart);
-            row.word = p;
-            row.DisableWord();
-            Record row1 = new Record(DictionList.userdic);
-            row.word = p;
-            row.DisableWord();
+            foreach(var item in dictions.GetUsingdictions()) {
+                Record row = new Record(item.ToString());
+                row.word = p;
+                row.DisableWord();                
+            }
             return p + "#word now is not avalible";
         }
     }

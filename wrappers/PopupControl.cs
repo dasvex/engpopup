@@ -6,6 +6,7 @@ namespace PopupWindow
 {
     public class PopupControll {
         private class PopupWindow : IDisposable {
+            public event EventHandler MenuClick;
             public int Delay {
                 get {
                     return popup.Delay;
@@ -32,6 +33,19 @@ namespace PopupWindow
                 popup.ShowCloseButton = false;
                 popup.ShowGrip = false;
                 popup.ClickForm += new EventHandler(popup_ClickForm);
+                popup.ShowOptionsButton = true;
+                ToolStripMenuItem DisableWordMenu = new ToolStripMenuItem("Disable");
+                DisableWordMenu.Click += delegate {
+                    if(MenuClick != null)
+                        MenuClick(this,null);
+                };
+                popup.OptionsMenu = new ContextMenuStrip();
+                popup.OptionsMenu.Items.Add(DisableWordMenu);
+            }
+
+            void OptionsMenu_Click(object sender,EventArgs e) {
+                if(MenuClick != null)
+                    MenuClick(sender,e);
             }
             private void popup_ClickForm(object sender,EventArgs args) {
                 Form popup = sender as Form;
@@ -49,6 +63,11 @@ namespace PopupWindow
                 popup.Dispose();
             }
         }
+        public event EventHandler MenuClick;
+        public SqliteGateWay.Record LastRow {
+            get;
+            private set;
+        }
         public int Delay {
             get;
             set;
@@ -59,7 +78,15 @@ namespace PopupWindow
         }
         public void Show(string message) {
             PopupWindow popup = this.SettingsApply(new PopupWindow());
+            popup.MenuClick += new EventHandler(popup_MenuClick);
             popup.Show(message);
+        }
+        public void AddLastRow(SqliteGateWay.Record row){
+            this.LastRow = row;
+        }
+        void popup_MenuClick(object sender,EventArgs e) {
+            if(MenuClick != null)
+                MenuClick(sender,e);
         }
         private PopupWindow SettingsApply(PopupWindow popup) {
             popup.Delay = this.Delay;

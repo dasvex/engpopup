@@ -19,15 +19,25 @@ namespace EngPopup
     class MainContext : ApplicationContext{
         private TrayForm      Tray     = new TrayForm();
         private TimerControl  timer    = new TimerControl();
-        private CommandStore  commands = new CommandStore();//юзинг&
+        private CommandStore  commands = new CommandStore();//юзинг
         private WordSelector.WordSelector selector = new WordSelector.WordSelector();// не хочет рандомить 
         private PopupControll popup = new PopupControll();
         private DictionsControl dictions = new DictionsControl(new DictionInfo().GetAllDictions());
         private Dispatcher disp;
 
         public MainContext() {
+            foreach(var item in new DictionInfo().GetAllDictions()) 
+                dictions.AddInUsingDictions(item);
             disp = Dispatcher.CurrentDispatcher;
             this.Initilize();
+            popup.MenuClick += new EventHandler(popup_MenuClick);
+        }
+
+        void popup_MenuClick(object sender,EventArgs e) {
+            DictionsControl tmpcont = new DictionsControl(new DictionInfo().GetAllDictions());
+            tmpcont.AddInUsingDictions(popup.LastRow.TableName);
+            AConsoleCommand command = new CommandDisableWord(tmpcont);
+            command.ExecuteAndGetResponse( new CommandParser.ImputCommand(" "+popup.LastRow.word));
         }
 
         private void RunConsole(){
@@ -36,12 +46,12 @@ namespace EngPopup
                 commands.Add(new CommandStop(timer));
                 commands.Add(new CommandCallPopup(timer));
                 commands.Add(new CommandStart(timer));
-                commands.Add(new CommandSelectWord());
-                commands.Add(new CommandInsertWord());
-                commands.Add(new CommandDeleteWord());
-                commands.Add(new CommandSetPriority());
-                commands.Add(new CommandEnableWord());
-                commands.Add(new CommandDisableWord());
+                commands.Add(new CommandSelectWord(dictions));
+                commands.Add(new CommandInsertWord(dictions));
+                commands.Add(new CommandDeleteWord(dictions));
+                commands.Add(new CommandSetPriority(dictions));
+                commands.Add(new CommandEnableWord(dictions));
+                commands.Add(new CommandDisableWord(dictions));
                 commands.Add(new CommandHelp(commands));
                 commands.Add(new CommandQuitShell(promt));
                 commands.Add(new CommandResetRandomSequence(selector));
@@ -63,8 +73,9 @@ namespace EngPopup
         private void timer_Elapsed(object sender,System.EventArgs args) {
             disp.BeginInvoke(
                 new Action(() => {
-                    Record row = selector.GetWord();
+                    Record row = selector.GetWord(dictions);
                     //PopupWindow.PopupWindow popup1    = new PopupWindow.PopupWindow();
+                    popup.AddLastRow(row);
                     popup.Show(row.word + " >>> " + row.trans + "\n >>> freq #" + row.freq + " call #" + row.call + "\n" + System.DateTime.Now.ToLongTimeString());
                     row.IncreaseCall();
                 })
@@ -80,6 +91,8 @@ namespace EngPopup
         private void InitilizeTrayForm() {
             MenuItem ConsoleMenu = new MenuItem("Console");
             MenuItem CloseMenu = new MenuItem("Close");
+            MenuItem DictionFormMenu = new MenuItem("Dcitions");
+            MenuItem SettingMenu = new MenuItem("Setting");
             CloseMenu.Click += delegate {
                 Tray.Visible = false;
                 Application.Exit();
@@ -89,8 +102,19 @@ namespace EngPopup
                 t.IsBackground = true;
                 t.Start();
             };
+            DictionFormMenu.Click+=delegate{
+                Form a = new Dictions(dictions);
+                a.Show();
+            };
+            SettingMenu.Click += delegate {
+                Form a = new Setting(selector);
+                a.Show();
+            };
             Tray.AddMeniItem(ConsoleMenu);
+            Tray.AddMeniItem(DictionFormMenu);
+            Tray.AddMeniItem(SettingMenu);
             Tray.AddMeniItem(CloseMenu);
+
         }
     }
 }

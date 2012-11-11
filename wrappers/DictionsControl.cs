@@ -16,7 +16,7 @@ namespace EngPopup {
             return UsingDictionsList.Contains(diction);
         }
         public int AddInUsingDictions(string diction) {
-            if(this.ContainsInAvalibleDictions(diction))
+            if(this.ContainsInAvalibleDictions(diction) && !this.ContainsInUsingDictions(diction) )
                 return UsingDictionsList.Add(diction);
             return 0;
         }

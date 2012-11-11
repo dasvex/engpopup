@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using EngPopup.exceptions;
 using Troschuetz.Random;
 using SqliteGateWay;
@@ -61,17 +63,29 @@ namespace WordSelector {
         public void SetBordersAndMedian(int leftBorder , int rightBorder , int median) {
             generator.SetBordersAndMedian(leftBorder,rightBorder,median);
         }
-        public Record GetWord() {
-            Record row = new Record(DictionList.standart);
-            System.Diagnostics.Debug.WriteLine(this.NextValue());
-            row.freq = this.NextValue();
-            if (row.SelectByFreq() )
-                return row;
+        public Record GetWord(EngPopup.DictionsControl dictions) {
+            IList<Record> allRecords = new List<Record>();
+            foreach(var item in dictions.GetUsingdictions()) {
+                Record row = new Record(item.ToString());
+                row.freq = this.NextValue();
+                if(row.SelectByFreq())
+                    allRecords.Add(row);
+            }
+            if(allRecords.Count==0)
+                return this.ErrorRecord("");
+            var maxfreq = allRecords.Max(x => x.freq);
+            var allMaxRecords = allRecords.Where(x => x.freq == maxfreq);
+            allRecords = allMaxRecords.ToList();
+            Random r = new Random();
+            return allRecords[r.Next(0,allRecords.Count-1)];
+        }  //переписать говно это 
+        private Record ErrorRecord(string usingTables) {
+            Record row = new Record(usingTables);
             row.word = @"error get word by freq";
             row.trans = "";
             row.id = 0;
             return row;
-        }  //переписать говно это 
+        }
     }
 }
 
